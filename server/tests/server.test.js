@@ -10,7 +10,9 @@ const todos = [{
 	text: 'First test todo'
 },{
 	_id: new ObjectID(),
-	text: 'Sencond test todo'
+	text: 'Sencond test todo',
+	completed: true,
+	completedAt: 12345
 }];
 
 //delete everyhitng on the todo list and start over
@@ -139,6 +141,44 @@ describe('DELETE /todos/:id', () => {
   });
 });
 
+describe('PATCH /todo/:id', ()=>{
+	it('should update the todo', (done)=>{
+		var hexId = todos[0]._id.toHexString();
+		var text = 'This should be the new text'
+		
+		request(app)
+			.patch(`/todos/${hexId}`)
+			.send({
+				completed: true,
+				text: text,
+			})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.completed).toBe(true);
+				expect(res.body.todo.text).toBe(text);
+				expect(typeof res.body.todo.completedAt).toBe('number');
+			})
+			.end(done);
+	});
 
+	it('should clear clompletedAt when todo is not completed', (done)=>{
+		var hexId = todos[1]._id.toHexString();
+		var text = 'This is a new text'
 
+		request(app)
+			.patch(`/todos/${hexId}`)
+			.send({
+				completed: false,
+				text: text,
+				completedAt: null
+			})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.body.todo.text).toBe(text);
+				expect(res.body.todo.completed).toBe(false);
+				expect(res.body.todo.completedAt).toBe(null);
+			})
+			.end(done);
+	});
 
+});
