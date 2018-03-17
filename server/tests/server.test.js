@@ -197,7 +197,7 @@ describe('GET /users/me', ()=>{
 });
 
 describe('POST /users', ()=>{
-	it('shoukd return a user', (done)=>{
+	it('shoukd creat a user', (done)=>{
 		var email = 'example@example.com';
 		var password = 'password123';
 		
@@ -218,11 +218,11 @@ describe('POST /users', ()=>{
 					expect(user).toBeTruthy();
 					expect(user.password).not.toBe(password);
 					done();
-				})
+				}).catch((e)=>done(e));
 			});
 	});
 
-	it('shoukd return validation errors if requested invalid', (done)=>{
+	it('should return validation errors if requested invalid', (done)=>{
 		request(app)
 			.post('/users')
 			.send({
@@ -245,6 +245,57 @@ describe('POST /users', ()=>{
 	});
 });
 
+describe('POST /users/login', () => {
+	it('should login user and return auth token', (done)=>{
+		request(app)
+			.post('/users/login')
+			.send({
+				email: users[1].email,
+				password: users[1].password
+			})
+			.expect(200)
+			.expect((res)=>{
+				expect(res.headers['x-auth']).toBeTruthy();
+			})
+			.end(done);
+			// .end((err, res)=>{
+			// 	if(err){
+			// 		return done(err);
+			// 	}
+
+			// 	User.findById(users[1]._id).then((user)=>{
+			// 		expect(user.tokens[0]).toInclude({
+			// 			access: 'auth',
+			// 			token: res.headers['x-auth']
+			// 		});
+			// 		done();
+			// 	}).catch((e)=>done(e));
+			// });
+	});
+
+	it('should reject invalid login', (done)=>{
+		request(app)
+			.post('/users/login')
+			.send({
+				email: users[1].email,
+				password: users[1].password + '1'
+			})
+			.expect(400)
+			.expect((res)=>{
+				expect(res.headers['x-auth']).toBeFalsy();
+			})
+			.end((err, res)=>{
+				if(err){
+					return done(err);
+				}
+
+				User.findById(users[1]._id).then((user)=>{
+					expect(user.tokens.length).toBe(0);
+					done();
+				}).catch((e)=>{done(e)});
+			});
+	});
+});
 
 
 
